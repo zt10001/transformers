@@ -386,6 +386,11 @@ _import_structure = {
         "JukeboxTokenizer",
         "JukeboxVQVAEConfig",
     ],
+    "models.kosmos2": [
+        "KOSMOS2_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "Kosmos2Config",
+        "Kosmos2Processor",
+    ],
     "models.layoutlm": ["LAYOUTLM_PRETRAINED_CONFIG_ARCHIVE_MAP", "LayoutLMConfig", "LayoutLMTokenizer"],
     "models.layoutlmv2": [
         "LAYOUTLMV2_PRETRAINED_CONFIG_ARCHIVE_MAP",
@@ -772,6 +777,7 @@ else:
     _import_structure["models.ernie_m"].append("ErnieMTokenizer")
     _import_structure["models.fnet"].append("FNetTokenizer")
     _import_structure["models.gpt_sw3"].append("GPTSw3Tokenizer")
+    _import_structure["models.kosmos2"].append("Kosmos2Tokenizer")
     _import_structure["models.layoutxlm"].append("LayoutXLMTokenizer")
     _import_structure["models.llama"].append("LlamaTokenizer")
     _import_structure["models.m2m_100"].append("M2M100Tokenizer")
@@ -833,6 +839,7 @@ else:
     _import_structure["models.gpt_neox"].append("GPTNeoXTokenizerFast")
     _import_structure["models.gpt_neox_japanese"].append("GPTNeoXJapaneseTokenizer")
     _import_structure["models.herbert"].append("HerbertTokenizerFast")
+    _import_structure["models.kosmos2"].append("Kosmos2TokenizerFast")
     _import_structure["models.layoutlm"].append("LayoutLMTokenizerFast")
     _import_structure["models.layoutlmv2"].append("LayoutLMv2TokenizerFast")
     _import_structure["models.layoutlmv3"].append("LayoutLMv3TokenizerFast")
@@ -955,6 +962,7 @@ else:
     _import_structure["models.glpn"].extend(["GLPNFeatureExtractor", "GLPNImageProcessor"])
     _import_structure["models.idefics"].extend(["IdeficsImageProcessor"])
     _import_structure["models.imagegpt"].extend(["ImageGPTFeatureExtractor", "ImageGPTImageProcessor"])
+    _import_structure["models.kosmos2"].append("Kosmos2ImageProcessor")
     _import_structure["models.layoutlmv2"].extend(["LayoutLMv2FeatureExtractor", "LayoutLMv2ImageProcessor"])
     _import_structure["models.layoutlmv3"].extend(["LayoutLMv3FeatureExtractor", "LayoutLMv3ImageProcessor"])
     _import_structure["models.levit"].extend(["LevitFeatureExtractor", "LevitImageProcessor"])
@@ -2000,6 +2008,16 @@ else:
             "JukeboxPreTrainedModel",
             "JukeboxPrior",
             "JukeboxVQVAE",
+        ]
+    )
+    _import_structure["models.kosmos2"].extend(
+        [
+            "KOSMOS2_PRETRAINED_MODEL_ARCHIVE_LIST",
+            "Kosmos2ForConditionalGeneration",
+            "Kosmos2Model",
+            "Kosmos2PreTrainedModel",
+            "Kosmos2TextModel",
+            "Kosmos2VisionModel",
         ]
     )
     _import_structure["models.layoutlm"].extend(
@@ -4464,6 +4482,11 @@ if TYPE_CHECKING:
         JukeboxTokenizer,
         JukeboxVQVAEConfig,
     )
+    from .models.kosmos2 import (
+        KOSMOS2_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        Kosmos2Config,
+        Kosmos2Processor,
+    )
     from .models.layoutlm import LAYOUTLM_PRETRAINED_CONFIG_ARCHIVE_MAP, LayoutLMConfig, LayoutLMTokenizer
     from .models.layoutlmv2 import (
         LAYOUTLMV2_PRETRAINED_CONFIG_ARCHIVE_MAP,
@@ -4823,6 +4846,7 @@ if TYPE_CHECKING:
         from .models.ernie_m import ErnieMTokenizer
         from .models.fnet import FNetTokenizer
         from .models.gpt_sw3 import GPTSw3Tokenizer
+        from .models.kosmos2 import Kosmos2Tokenizer
         from .models.layoutxlm import LayoutXLMTokenizer
         from .models.llama import LlamaTokenizer
         from .models.m2m_100 import M2M100Tokenizer
@@ -4876,6 +4900,7 @@ if TYPE_CHECKING:
         from .models.gpt_neox import GPTNeoXTokenizerFast
         from .models.gpt_neox_japanese import GPTNeoXJapaneseTokenizer
         from .models.herbert import HerbertTokenizerFast
+        from .models.kosmos2 import Kosmos2TokenizerFast
         from .models.layoutlm import LayoutLMTokenizerFast
         from .models.layoutlmv2 import LayoutLMv2TokenizerFast
         from .models.layoutlmv3 import LayoutLMv3TokenizerFast
@@ -4969,6 +4994,7 @@ if TYPE_CHECKING:
         from .models.glpn import GLPNFeatureExtractor, GLPNImageProcessor
         from .models.idefics import IdeficsImageProcessor
         from .models.imagegpt import ImageGPTFeatureExtractor, ImageGPTImageProcessor
+        from .models.kosmos2 import Kosmos2ImageProcessor
         from .models.layoutlmv2 import LayoutLMv2FeatureExtractor, LayoutLMv2ImageProcessor
         from .models.layoutlmv3 import LayoutLMv3FeatureExtractor, LayoutLMv3ImageProcessor
         from .models.levit import LevitFeatureExtractor, LevitImageProcessor
@@ -5843,6 +5869,14 @@ if TYPE_CHECKING:
             JukeboxPreTrainedModel,
             JukeboxPrior,
             JukeboxVQVAE,
+        )
+        from .models.kosmos2 import (
+            KOSMOS2_PRETRAINED_MODEL_ARCHIVE_LIST,
+            Kosmos2ForConditionalGeneration,
+            Kosmos2Model,
+            Kosmos2PreTrainedModel,
+            Kosmos2TextModel,
+            Kosmos2VisionModel,
         )
         from .models.layoutlm import (
             LAYOUTLM_PRETRAINED_MODEL_ARCHIVE_LIST,
