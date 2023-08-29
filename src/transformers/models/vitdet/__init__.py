@@ -20,9 +20,7 @@ from ...utils import (
 )
 
 
-_import_structure = {
-    "configuration_dinov2": ["DINOV2_PRETRAINED_CONFIG_ARCHIVE_MAP", "Dinov2Config", "Dinov2OnnxConfig"]
-}
+_import_structure = {"configuration_vitdet": ["VITDET_PRETRAINED_CONFIG_ARCHIVE_MAP", "VitDetConfig"]}
 
 try:
     if not is_torch_available():
@@ -30,16 +28,15 @@ try:
 except OptionalDependencyNotAvailable:
     pass
 else:
-    _import_structure["modeling_dinov2"] = [
-        "DINOV2_PRETRAINED_MODEL_ARCHIVE_LIST",
-        "Dinov2ForImageClassification",
-        "Dinov2Model",
-        "Dinov2PreTrainedModel",
-        "Dinov2Backbone",
+    _import_structure["modeling_vitdet"] = [
+        "VITDET_PRETRAINED_MODEL_ARCHIVE_LIST",
+        "VitDetModel",
+        "VitDetPreTrainedModel",
+        "VitDetBackbone",
     ]
 
 if TYPE_CHECKING:
-    from .configuration_dinov2 import DINOV2_PRETRAINED_CONFIG_ARCHIVE_MAP, Dinov2Config, Dinov2OnnxConfig
+    from .configuration_vitdet import VITDET_PRETRAINED_CONFIG_ARCHIVE_MAP, VitDetConfig
 
     try:
         if not is_torch_available():
@@ -47,12 +44,11 @@ if TYPE_CHECKING:
     except OptionalDependencyNotAvailable:
         pass
     else:
-        from .modeling_dinov2 import (
-            DINOV2_PRETRAINED_MODEL_ARCHIVE_LIST,
-            Dinov2Backbone,
-            Dinov2ForImageClassification,
-            Dinov2Model,
-            Dinov2PreTrainedModel,
+        from .modeling_vitdet import (
+            VITDET_PRETRAINED_MODEL_ARCHIVE_LIST,
+            VitDetBackbone,
+            VitDetModel,
+            VitDetPreTrainedModel,
         )
 
 else:

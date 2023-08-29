@@ -12,20 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Testing suite for the PyTorch Dinov2 model. """
+""" Testing suite for the PyTorch ViTDet model. """
 
 
 import inspect
 import unittest
 
-from transformers import Dinov2Config
-from transformers.testing_utils import (
-    require_torch,
-    require_vision,
-    slow,
-    torch_device,
-)
-from transformers.utils import cached_property, is_torch_available, is_vision_available
+from transformers import VitDetConfig
+from transformers.testing_utils import require_torch, torch_device
+from transformers.utils import is_torch_available
 
 from ...test_backbone_common import BackboneTesterMixin
 from ...test_configuration_common import ConfigTester
@@ -37,17 +32,10 @@ if is_torch_available():
     import torch
     from torch import nn
 
-    from transformers import Dinov2Backbone, Dinov2ForImageClassification, Dinov2Model
-    from transformers.models.dinov2.modeling_dinov2 import DINOV2_PRETRAINED_MODEL_ARCHIVE_LIST
+    from transformers import VitDetBackbone, VitDetModel
 
 
-if is_vision_available():
-    from PIL import Image
-
-    from transformers import AutoImageProcessor
-
-
-class Dinov2ModelTester:
+class VitDetModelTester:
     def __init__(
         self,
         parent,
@@ -86,9 +74,8 @@ class Dinov2ModelTester:
         self.initializer_range = initializer_range
         self.scope = scope
 
-        # in Dinov2, the seq length equals the number of patches + 1 (we add 1 for the [CLS] token)
-        num_patches = (image_size // patch_size) ** 2
-        self.seq_length = num_patches + 1
+        self.num_patches_one_direction = self.image_size // self.patch_size
+        self.seq_length = (self.image_size // self.patch_size) ** 2
 
     def prepare_config_and_inputs(self):
         pixel_values = floats_tensor([self.batch_size, self.num_channels, self.image_size, self.image_size])
@@ -102,7 +89,7 @@ class Dinov2ModelTester:
         return config, pixel_values, labels
 
     def get_config(self):
-        return Dinov2Config(
+        return VitDetConfig(
             image_size=self.image_size,
             patch_size=self.patch_size,
             num_channels=self.num_channels,
@@ -118,31 +105,35 @@ class Dinov2ModelTester:
         )
 
     def create_and_check_model(self, config, pixel_values, labels):
-        model = Dinov2Model(config=config)
+        model = VitDetModel(config=config)
         model.to(torch_device)
         model.eval()
         result = model(pixel_values)
-        self.parent.assertEqual(result.last_hidden_state.shape, (self.batch_size, self.seq_length, self.hidden_size))
+        self.parent.assertEqual(
+            result.last_hidden_state.shape,
+            (self.batch_size, self.hidden_size, self.num_patches_one_direction, self.num_patches_one_direction),
+        )
 
     def create_and_check_backbone(self, config, pixel_values, labels):
-        model = Dinov2Backbone(config=config)
+        model = VitDetBackbone(config=config)
         model.to(torch_device)
         model.eval()
         result = model(pixel_values)
 
         # verify hidden states
         self.parent.assertEqual(len(result.feature_maps), len(config.out_features))
-        expected_size = self.image_size // config.patch_size
         self.parent.assertListEqual(
-            list(result.feature_maps[0].shape), [self.batch_size, model.channels[0], expected_size, expected_size]
+            list(result.feature_maps[0].shape),
+            [self.batch_size, self.hidden_size, self.num_patches_one_direction, self.num_patches_one_direction],
         )
 
         # verify channels
         self.parent.assertEqual(len(model.channels), len(config.out_features))
+        self.parent.assertListEqual(model.channels, [config.hidden_size])
 
         # verify backbone works with out_features=None
         config.out_features = None
-        model = Dinov2Backbone(config=config)
+        model = VitDetBackbone(config=config)
         model.to(torch_device)
         model.eval()
         result = model(pixel_values)
@@ -150,91 +141,44 @@ class Dinov2ModelTester:
         # verify feature maps
         self.parent.assertEqual(len(result.feature_maps), 1)
         self.parent.assertListEqual(
-            list(result.feature_maps[0].shape), [self.batch_size, model.channels[0], expected_size, expected_size]
+            list(result.feature_maps[0].shape),
+            [self.batch_size, self.hidden_size, self.num_patches_one_direction, self.num_patches_one_direction],
         )
 
         # verify channels
         self.parent.assertEqual(len(model.channels), 1)
-
-        # verify backbone works with apply_layernorm=False and reshape_hidden_states=False
-        config.apply_layernorm = False
-        config.reshape_hidden_states = False
-
-        model = Dinov2Backbone(config=config)
-        model.to(torch_device)
-        model.eval()
-        result = model(pixel_values)
-
-        # verify feature maps
-        self.parent.assertEqual(len(result.feature_maps), 1)
-        self.parent.assertListEqual(
-            list(result.feature_maps[0].shape), [self.batch_size, self.seq_length, self.hidden_size]
-        )
-
-    def create_and_check_for_image_classification(self, config, pixel_values, labels):
-        config.num_labels = self.type_sequence_label_size
-        model = Dinov2ForImageClassification(config)
-        model.to(torch_device)
-        model.eval()
-        result = model(pixel_values, labels=labels)
-        self.parent.assertEqual(result.logits.shape, (self.batch_size, self.type_sequence_label_size))
-
-        # test greyscale images
-        config.num_channels = 1
-        model = Dinov2ForImageClassification(config)
-        model.to(torch_device)
-        model.eval()
-
-        pixel_values = floats_tensor([self.batch_size, 1, self.image_size, self.image_size])
-        result = model(pixel_values)
-        self.parent.assertEqual(result.logits.shape, (self.batch_size, self.type_sequence_label_size))
+        self.parent.assertListEqual(model.channels, [config.hidden_size])
 
     def prepare_config_and_inputs_for_common(self):
         config_and_inputs = self.prepare_config_and_inputs()
-        (
-            config,
-            pixel_values,
-            labels,
-        ) = config_and_inputs
+        config, pixel_values, labels = config_and_inputs
         inputs_dict = {"pixel_values": pixel_values}
         return config, inputs_dict
 
 
 @require_torch
-class Dinov2ModelTest(ModelTesterMixin, PipelineTesterMixin, unittest.TestCase):
+class VitDetModelTest(ModelTesterMixin, PipelineTesterMixin, unittest.TestCase):
     """
-    Here we also overwrite some of the tests of test_modeling_common.py, as Dinov2 does not use input_ids, inputs_embeds,
+    Here we also overwrite some of the tests of test_modeling_common.py, as VitDet does not use input_ids, inputs_embeds,
     attention_mask and seq_length.
     """
 
-    all_model_classes = (
-        (
-            Dinov2Model,
-            Dinov2ForImageClassification,
-            Dinov2Backbone,
-        )
-        if is_torch_available()
-        else ()
-    )
-    pipeline_model_mapping = (
-        {"feature-extraction": Dinov2Model, "image-classification": Dinov2ForImageClassification}
-        if is_torch_available()
-        else {}
-    )
-    fx_compatible = False
+    all_model_classes = (VitDetModel, VitDetBackbone) if is_torch_available() else ()
+    pipeline_model_mapping = {"feature-extraction": VitDetModel} if is_torch_available() else {}
 
+    fx_compatible = False
     test_pruning = False
     test_resize_embeddings = False
     test_head_masking = False
 
     def setUp(self):
-        self.model_tester = Dinov2ModelTester(self)
-        self.config_tester = ConfigTester(self, config_class=Dinov2Config, has_text_modality=False, hidden_size=37)
+        self.model_tester = VitDetModelTester(self)
+        self.config_tester = ConfigTester(self, config_class=VitDetConfig, has_text_modality=False, hidden_size=37)
 
     def test_config(self):
         self.config_tester.run_common_tests()
 
-    @unittest.skip(reason="Dinov2 does not use inputs_embeds")
+    @unittest.skip(reason="VitDet does not use inputs_embeds")
     def test_inputs_embeds(self):
         pass
 
@@ -267,63 +211,81 @@ class Dinov2ModelTest(ModelTesterMixin, PipelineTesterMixin, unittest.TestCase):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
         self.model_tester.create_and_check_backbone(*config_and_inputs)
 
-    def test_for_image_classification(self):
-        config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_for_image_classification(*config_and_inputs)
+    def test_hidden_states_output(self):
+        def check_hidden_states_output(inputs_dict, config, model_class):
+            model = model_class(config)
+            model.to(torch_device)
+            model.eval()
 
-    @unittest.skip(reason="Dinov2 does not support feedforward chunking yet")
+            with torch.no_grad():
+                outputs = model(**self._prepare_for_class(inputs_dict, model_class))
+
+            hidden_states = outputs.hidden_states
+
+            expected_num_stages = self.model_tester.num_hidden_layers
+            self.assertEqual(len(hidden_states), expected_num_stages + 1)
+
+            # VitDet's feature maps are of shape (batch_size, num_channels, height, width)
+            self.assertListEqual(
+                list(hidden_states[0].shape[-2:]),
+                [
+                    self.model_tester.num_patches_one_direction,
+                    self.model_tester.num_patches_one_direction,
+                ],
+            )
+
+        config, inputs_dict = self.model_tester.prepare_config_and_inputs_for_common()
+
+        for model_class in self.all_model_classes:
+            inputs_dict["output_hidden_states"] = True
+            check_hidden_states_output(inputs_dict, config, model_class)
+
+            # check that output_hidden_states also work using config
+            del inputs_dict["output_hidden_states"]
+            config.output_hidden_states = True
+
+            check_hidden_states_output(inputs_dict, config, model_class)
+
+    # overwrite since VitDet only supports retraining gradients of hidden states
+    def test_retain_grad_hidden_states_attentions(self):
+        config, inputs_dict = self.model_tester.prepare_config_and_inputs_for_common()
+        config.output_hidden_states = True
+        config.output_attentions = self.has_attentions
+
+        # no need to test all models as different heads yield the same functionality
+        model_class = self.all_model_classes[0]
+        model = model_class(config)
+        model.to(torch_device)
+
+        inputs = self._prepare_for_class(inputs_dict, model_class)
+
+        outputs = model(**inputs)
+
+        output = outputs[0]
+
+        # Encoder-/Decoder-only models
+        hidden_states = outputs.hidden_states[0]
+        hidden_states.retain_grad()
+
+        output.flatten()[0].backward(retain_graph=True)
+
+        self.assertIsNotNone(hidden_states.grad)
+
+    @unittest.skip(reason="VitDet does not support feedforward chunking")
     def test_feed_forward_chunking(self):
         pass
 
-    @slow
+    @unittest.skip(reason="VitDet does not have standalone checkpoints since it used as backbone in other models")
     def test_model_from_pretrained(self):
-        for model_name in DINOV2_PRETRAINED_MODEL_ARCHIVE_LIST[:1]:
-            model = Dinov2Model.from_pretrained(model_name)
-            self.assertIsNotNone(model)
-
-
-# We will verify our results on an image of cute cats
-def prepare_img():
-    image = Image.open("./tests/fixtures/tests_samples/COCO/000000039769.png")
-    return image
+        pass
 
 
 @require_torch
-@require_vision
-class Dinov2ModelIntegrationTest(unittest.TestCase):
-    @cached_property
-    def default_image_processor(self):
-        return AutoImageProcessor.from_pretrained("facebook/dinov2-base") if is_vision_available() else None
-
-    @slow
-    def test_inference_no_head(self):
-        model = Dinov2Model.from_pretrained("facebook/dinov2-base").to(torch_device)
-
-        image_processor = self.default_image_processor
-        image = prepare_img()
-        inputs = image_processor(image, return_tensors="pt").to(torch_device)
-
-        # forward pass
-        with torch.no_grad():
-            outputs = model(**inputs)
-
-        # verify the last hidden states
-        expected_shape = torch.Size((1, 257, 768))
-        self.assertEqual(outputs.last_hidden_state.shape, expected_shape)
-
-        expected_slice = torch.tensor(
-            [[-2.1747, -0.4729, 1.0936], [-3.2780, -0.8269, -0.9210], [-2.9129, 1.1284, -0.7306]],
-            device=torch_device,
-        )
-        self.assertTrue(torch.allclose(outputs.last_hidden_state[0, :3, :3], expected_slice, atol=1e-4))
-
-
-@require_torch
-class Dinov2BackboneTest(unittest.TestCase, BackboneTesterMixin):
-    all_model_classes = (Dinov2Backbone,) if is_torch_available() else ()
-    config_class = Dinov2Config
+class VitDetBackboneTest(unittest.TestCase, BackboneTesterMixin):
+    all_model_classes = (VitDetBackbone,) if is_torch_available() else ()
+    config_class = VitDetConfig
 
     has_attentions = False
 
     def setUp(self):
-        self.model_tester = Dinov2ModelTester(self)
+        self.model_tester = VitDetModelTester(self)

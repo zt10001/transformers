@@ -204,6 +204,7 @@ MODEL_MAPPING_NAMES = OrderedDict(
         ("vit_hybrid", "ViTHybridModel"),
         ("vit_mae", "ViTMAEModel"),
         ("vit_msn", "ViTMSNModel"),
+        ("vitdet", "VitDetModel"),
         ("vivit", "VivitModel"),
         ("wav2vec2", "Wav2Vec2Model"),
         ("wav2vec2-conformer", "Wav2Vec2ConformerModel"),
@@ -1055,12 +1056,14 @@ MODEL_FOR_BACKBONE_MAPPING_NAMES = OrderedDict(
         ("convnext", "ConvNextBackbone"),
         ("convnextv2", "ConvNextV2Backbone"),
         ("dinat", "DinatBackbone"),
+        ("dinov2", "Dinov2Backbone"),
         ("focalnet", "FocalNetBackbone"),
         ("maskformer-swin", "MaskFormerSwinBackbone"),
         ("nat", "NatBackbone"),
         ("resnet", "ResNetBackbone"),
         ("swin", "SwinBackbone"),
         ("timm_backbone", "TimmBackbone"),
+        ("vitdet", "VitDetBackbone"),
     ]
 )
 
