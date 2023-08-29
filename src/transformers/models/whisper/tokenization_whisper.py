@@ -15,7 +15,7 @@
 """Tokenization classes for Whisper."""
 import json
 import os
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import regex as re
@@ -23,10 +23,6 @@ import regex as re
 from ...tokenization_utils import AddedToken, PreTrainedTokenizer
 from ...utils import logging
 from .english_normalizer import EnglishTextNormalizer
-
-
-if TYPE_CHECKING:
-    from ...pipelines.conversational import Conversation
 
 
 VOCAB_FILES_NAMES = {
@@ -699,15 +695,6 @@ class WhisperTokenizer(PreTrainedTokenizer):
         if is_split_into_words or add_prefix_space:
             text = " " + text
         return (text, kwargs)
-
-    # Copied from transformers.models.gpt2.tokenization_gpt2.GPT2Tokenizer._build_conversation_input_ids with GPT2 -> Whisper
-    def _build_conversation_input_ids(self, conversation: "Conversation") -> List[int]:
-        input_ids = []
-        for is_user, text in conversation.iter_texts():
-            input_ids.extend(self.encode(text, add_special_tokens=False) + [self.eos_token_id])
-        if len(input_ids) > self.model_max_length:
-            input_ids = input_ids[-self.model_max_length :]
-        return input_ids
 
     @property
     def default_chat_template(self):
