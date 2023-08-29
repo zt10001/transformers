@@ -554,7 +554,7 @@ class LlamaIntegrationTest(unittest.TestCase):
         tokens = tokenizer.tokenize("<s>>")
         self.assertNotEqual(sp_tokens, tokens)
         self.assertEqual(tokens, ["<s>", ">"])
-        
+
         tokens = tokenizer.tokenize("")
         self.assertEqual(tokens, [])
         self.assertEqual(tokens, tokenizer.sp_model.encode("", out_type=str))
